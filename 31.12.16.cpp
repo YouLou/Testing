@@ -45,6 +45,7 @@ namespace SUB {
 
 		ATTACH_OBJECT_TO_ALL_PLAYERS,
 		ALL_ONLINE_ATTACKERS,
+		TELEPORT_LOBBY_MENU,
 
 		VEHICLE_SPAWNER,
 		VEHICLE_SPAWNER_CHOOSE,
@@ -114,8 +115,11 @@ namespace {
 	// Declare/Initialise global variables here.
 
 
-	static bool isPaidVersion = false; 	// FREE OR PAID VERSION BOOL (not really safe, i will improve it)
-	static bool isTesterVersion = false; // TESTER VERSION (some griefing)
+	static bool isPaidVersion = true; 	// FREE OR PAID VERSION BOOL (not really safe, i will improve it)
+	static bool isTesterVersion = true; // TESTER VERSION (some griefing)
+	static bool isDevVersion = true; // DEV VERSION (unfinished / beta / strong features)
+	static int openBindXTimer = 0;
+	static int openBindRightArrowTimer = 0;
 
 	static bool isMenuOpen = false;
 
@@ -519,7 +523,7 @@ namespace {
 	int rpm = 0, torque = 0;
 
 	// Booleans for loops go here:
-	bool godMode = 0, neverWanted = 0, superJump = 0, ghostMode = 0, superRun = 0, noRagdoll = 0, neverDraggedOut = 0, vehicleCollisions = 1, freezedPlayer = -1, vehicleGodMode = 0, invisibleVehicle = 0, noBikeFall = 0, superCarMode = 0, autoFixVehicle = 0, vehicleWeapon = 0, vehicleLasers = 0, lockAllVehicleDoors = 0, vehicleLowGrip = 0, vehicleAlwaysBurnout = 0, flyMode = 0, vehrpm = 0, vehTorque = 0, explosiveBullets = 0, explosiveMelee = 0, heatVisionOnAim = 0, oneShotKill = 0, aimBot = 0, infiniteAmmo = 0, rapidFire = 0, weaponsEverywhere = 0, deleteGun = 0, driveItGun = 0, teleportGun = 0, shootRhino = 0, mobileRadio = 0, displayCoords = 0, explodeNearbyVehicles = 0, killNearbyPeds = 0, maxNearbyVehicles, esp = 0, wtfMode = 0, derailedTrain = 0, pedDropHack = 0, rpHack = 0, loop_massacre_mode = 0, loop_RainbowBoxes = 0, gravityGun = 0, rainbowNearbyVehicles = 0, jumpLoopNearbyVehicles = 0, loop_gta2cam = 0;
+	bool godMode = 0, godModeDisabled = 0, neverWanted = 0, superJump = 0, ghostMode = 0, ghostModeDisabled = 0, superRun = 0, noRagdoll = 0, neverDraggedOut = 0, vehicleCollisions = 1, vehicleCollisionsEnabled = 0, vehicleCollisionsDisabled = 0, freezedPlayer = -1, vehicleGodMode = 0, vehicleGodModeDisabled = 0, invisibleVehicle = 0, invisibleVehicleDisabled = 0, noBikeFall = 0, noBikeFallDisabled = 0, superCarMode = 0, autoFixVehicle = 0, vehicleWeapon = 0, vehicleLasers = 0, lockAllVehicleDoors = 0, vehicleLowGrip = 0, vehicleAlwaysBurnout = 0, vehicleAlwaysBurnoutDisabled = 0, flyMode = 0, vehrpm = 0, vehTorque = 0, explosiveBullets = 0, explosiveMelee = 0, heatVisionOnAim = 0, oneShotKill = 0, aimBot = 0, infiniteAmmo = 0, rapidFire = 0, weaponsEverywhere = 0, deleteGun = 0, driveItGun = 0, teleportGun = 0, shootRhino = 0, mobileRadio = 0, displayCoords = 0, explodeNearbyVehicles = 0, killNearbyPeds = 0, maxNearbyVehicles, esp = 0, wtfMode = 0, derailedTrain = 0, pedDropHack = 0, rpHack = 0, loop_massacre_mode = 0, loop_RainbowBoxes = 0, gravityGun = 0, rainbowNearbyVehicles = 0, jumpLoopNearbyVehicles = 0, loop_gta2cam = 0;
 	bool showESPNames = 0;
 	bool box3D = 1;
 	float ESPNameSize = 0.35f;
@@ -537,7 +541,7 @@ namespace {
 	int vehicleWeapons_HOTKEY = VK_SUBTRACT;
 
 	static int scrollDelay = 180;
-	static int addIntEasyDelay = 180;
+	static int addIntEasyDelay = 20;
 
 	std::string myProfilePath = getenv(StringToChar("USERPROFILE"));
 	std::string menuFolderPath = myProfilePath + "\\Documents\\D3SK1NG_MENU";
@@ -551,7 +555,7 @@ namespace {
 
 		WritePrivateProfileStringA("OTHER_SETTINGS", "AUTO_SCROLL_MS_DELAY", std::to_string(scrollDelay).c_str(), menuConfigIniPath.c_str());
 		WritePrivateProfileStringA("OTHER_SETTINGS", "INT_SCROLL_SPEED", std::to_string(addIntEasyDelay).c_str(), menuConfigIniPath.c_str());
-		
+
 		// TITLE BOX
 		WritePrivateProfileStringA("TITLE_BOX", "RED", std::to_string(titlebox.R).c_str(), menuConfigIniPath.c_str());
 		WritePrivateProfileStringA("TITLE_BOX", "GREEN", std::to_string(titlebox.G).c_str(), menuConfigIniPath.c_str());
@@ -1087,9 +1091,33 @@ namespace {
 			GRAPHICS::DRAW_RECT(0.16f + menuPos, Y_coord, 0.20f, 0.035f, selectionhi.R, selectionhi.G, selectionhi.B, selectionhi.A);
 		}
 
+		static bool isJoystickOpenRequest() {
+			if (CONTROLS::IS_DISABLED_CONTROL_JUST_PRESSED(2, INPUT_FRONTEND_X)) {
+				openBindXTimer = 20;
+			}
+			if (CONTROLS::IS_DISABLED_CONTROL_JUST_PRESSED(0, INPUT_CELLPHONE_RIGHT)) {
+				openBindRightArrowTimer = 20;
+			}
+
+			if (openBindXTimer > 0 && openBindRightArrowTimer > 0) {
+				openBindXTimer = 0;
+				openBindRightArrowTimer = 0;
+				return true;
+			}
+			else {
+				if (openBindXTimer > 0) {
+					openBindXTimer -= 1;
+				}
+				if (openBindRightArrowTimer > 0) {
+					openBindRightArrowTimer -= 1;
+				}
+				return false;
+			}
+
+		}
 		static void while_closed()
 		{
-			if (KeyJustUp(openMenu_HOTKEY) || KeyJustUp(VK_INSERT) || ((CONTROLS::IS_DISABLED_CONTROL_JUST_PRESSED(2, INPUT_FRONTEND_X) && CONTROLS::IS_DISABLED_CONTROL_JUST_PRESSED(0, INPUT_CELLPHONE_RIGHT)))) {  // JOYSTICK MENU OPEN COMBO
+			if (KeyJustUp(openMenu_HOTKEY) || KeyJustUp(VK_INSERT) || isJoystickOpenRequest()) {  // JOYSTICK MENU OPEN COMBO
 				isMenuOpen = !isMenuOpen;
 				currentsub = latestSubBeforeClosing;
 				menujustopened = true;
@@ -1103,7 +1131,7 @@ namespace {
 			if (totalop < currentop) {
 				currentop = 1;
 			}
-			if (KeyJustUp(openMenu_HOTKEY) || KeyJustUp(VK_INSERT) || ((CONTROLS::IS_DISABLED_CONTROL_JUST_PRESSED(2, INPUT_FRONTEND_X) && CONTROLS::IS_DISABLED_CONTROL_JUST_PRESSED(0, INPUT_CELLPHONE_RIGHT)))) {  // JOYSTICK MENU OPEN COMBO
+			if (KeyJustUp(openMenu_HOTKEY) || KeyJustUp(VK_INSERT) || isJoystickOpenRequest()) {  // JOYSTICK MENU OPEN COMBO
 				isMenuOpen = !isMenuOpen;
 			}
 
@@ -1145,7 +1173,7 @@ namespace {
 			if (IsKeyPressed(VK_NUMPAD2))
 			{
 				if (keyDownTimer == -1) {
-					keyDownTimer = GAMEPLAY::GET_GAME_TIMER() + scrollDelay; // every second, paint the vehicle
+					keyDownTimer = GAMEPLAY::GET_GAME_TIMER() + scrollDelay;
 				}
 				else if (keyDownTimer <= GAMEPLAY::GET_GAME_TIMER()) {
 					if (currentop == totalop) Top(); else Down();
@@ -1158,7 +1186,7 @@ namespace {
 			}
 			else if (CONTROLS::IS_DISABLED_CONTROL_PRESSED(0, 187)) {
 				if (keyDownTimer == -1) {
-					keyDownTimer = GAMEPLAY::GET_GAME_TIMER() + scrollDelay; // every second, paint the vehicle
+					keyDownTimer = GAMEPLAY::GET_GAME_TIMER() + scrollDelay;
 				}
 				else if (keyDownTimer <= GAMEPLAY::GET_GAME_TIMER()) {
 					if (currentop == totalop) Top(); else Down();
@@ -1446,8 +1474,9 @@ namespace {
 		VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(vehicle);
 
 
-		DECORATOR::DECOR_SET_INT(vehicle, "MPBitset", 0);
-
+		if (highEndBypass) {
+			DECORATOR::DECOR_SET_INT(vehicle, "MPBitset", 0);
+		}
 		if (teleportInSpawnedVehicle) { PED::SET_PED_INTO_VEHICLE(playerPed, vehicle, -1); }
 		if (maxSpawnedVehicle) { MaxThisVehicle(vehicle); }
 
@@ -2017,7 +2046,7 @@ namespace {
 		VEHICLE::SET_VEHICLE_MOD_KIT(veh, 0);
 		VEHICLE::SET_VEHICLE_MOD(veh, ModType, ModIndex, false);
 	}
-	void AddVehicleMod(char* text, int value, int &val,  int ModIndex, int inc = 1, bool fast = 0, bool &toggled = null, bool enableminmax = 0, int max = 0, int min = 0)
+	void AddVehicleMod(char* text, int value, int &val, int ModIndex, int inc = 1, bool fast = 0, bool &toggled = null, bool enableminmax = 0, int max = 0, int min = 0)
 	{
 		null = 0;
 		AddOption(text, null);
@@ -2483,6 +2512,7 @@ namespace {
 		AddSmallInfo((char*)Zone.str().c_str(), 8);
 		AddSmallInfo((char*)Street.str().c_str(), 9);
 		AddSmallInfo((char*)Distance.str().c_str(), 10);
+		AddSmallInfo((char*)std::to_string(PED::GET_PED_MONEY(PLAYER::GET_PLAYER_PED(p))).c_str(), 11);
 
 	}
 	void AddPlayer(char* text, Player player, bool &option_code_bool = null, void(&Func)() = nullFunc, int submenu_index = -1)
@@ -2998,11 +3028,6 @@ namespace {
 	//GOD MODE
 	void GodMode()
 	{
-		static int armour_player = 0;
-		if (armour_player == 0)
-		{
-			armour_player = PED::GET_PED_ARMOUR(playerPed);
-		}
 
 		if (godMode) {
 			//set_status_text("Activating godmode");
@@ -3011,19 +3036,6 @@ namespace {
 			PED::SET_PED_CAN_RAGDOLL(playerPed, FALSE);
 			PED::SET_PED_CAN_RAGDOLL_FROM_PLAYER_IMPACT(playerPed, FALSE);
 			PED::ADD_ARMOUR_TO_PED(playerPed, PLAYER::GET_PLAYER_MAX_ARMOUR(playerID) - PED::GET_PED_ARMOUR(playerPed));
-		}
-		else
-		{
-			//set_status_text("Deactivating godmode");
-			PLAYER::SET_PLAYER_INVINCIBLE(playerID, false);
-			ENTITY::SET_ENTITY_PROOFS(playerPed, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
-			PED::SET_PED_CAN_RAGDOLL(playerPed, TRUE);
-			PED::SET_PED_CAN_RAGDOLL_FROM_PLAYER_IMPACT(playerPed, TRUE);
-			if (armour_player != 0)
-			{
-				PED::SET_PED_ARMOUR(playerPed, armour_player);
-				armour_player = 0;
-			}
 		}
 	}
 
@@ -3050,9 +3062,6 @@ namespace {
 		if (ghostMode) {
 			ENTITY::SET_ENTITY_VISIBLE(playerPed, false, 0);
 		}
-		else {
-			ENTITY::SET_ENTITY_VISIBLE(playerPed, true, 0);
-		}
 	}
 
 	void SuperRun() {
@@ -3072,24 +3081,20 @@ namespace {
 	}
 
 	void VehicleGodMode() {
-		if (VEHICLE::GET_PED_IN_VEHICLE_SEAT(PED::GET_VEHICLE_PED_IS_USING(playerPed), -1) == playerPed) {
-			if (vehicleGodMode) {
-				Vehicle currentVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, 1);
-				ENTITY::SET_ENTITY_INVINCIBLE(currentVehicle, true);
-			}
-			else {
-				Vehicle currentVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, 1);
-				ENTITY::SET_ENTITY_INVINCIBLE(currentVehicle, false);
-			}
+		if (vehicleGodMode) {
+			Vehicle veh = PED::GET_VEHICLE_PED_IS_IN(playerPed, 1);
+			RequestControlOfEnt(veh);
+			ENTITY::SET_ENTITY_INVINCIBLE(veh, TRUE);
+			ENTITY::SET_ENTITY_PROOFS(veh, 1, 1, 1, 1, 1, 1, 1, 1);
+			VEHICLE::SET_VEHICLE_TYRES_CAN_BURST(veh, 0);
+			VEHICLE::SET_VEHICLE_WHEELS_CAN_BREAK(veh, 0);
+			VEHICLE::SET_VEHICLE_CAN_BE_VISIBLY_DAMAGED(veh, 0);
 		}
 	}
 
 	void InvisibleVehicle() {
 		if (invisibleVehicle) {
 			ENTITY::SET_ENTITY_VISIBLE(PED::GET_VEHICLE_PED_IS_USING(playerPed), false, 0);
-		}
-		else {
-			ENTITY::SET_ENTITY_VISIBLE(PED::GET_VEHICLE_PED_IS_USING(playerPed), true, 0);
 		}
 	}
 
@@ -3123,7 +3128,7 @@ namespace {
 		VEHICLE::SET_VEHICLE_MOD(currentVehicle, 10, 1, 0);
 	}
 
-	
+
 	void FixVehicle() {
 		Vehicle currentVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, 1);
 		VEHICLE::SET_VEHICLE_FIXED(currentVehicle);
@@ -3142,9 +3147,6 @@ namespace {
 	void NoBikeFall() {
 		if (noBikeFall) {
 			PED::SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(playerPed, 1);
-		}
-		else {
-			PED::SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(playerPed, 0);
 		}
 	}
 
@@ -3209,15 +3211,7 @@ namespace {
 		}
 	}
 
-	void VehicleCollisions()
-	{
-		if (vehicleCollisions) {
-			ENTITY::SET_ENTITY_COLLISION(PED::GET_VEHICLE_PED_IS_IN(playerPed, 1), true, true);
-		}
-		else {
-			ENTITY::SET_ENTITY_COLLISION(PED::GET_VEHICLE_PED_IS_IN(playerPed, 1), false, true);
-		}
-	}
+
 	void FlyMode() {
 		if (flyMode && PED::IS_PED_IN_ANY_VEHICLE(playerPed, false)) {
 			Vector3 cameraRotation = CAM::GET_GAMEPLAY_CAM_ROT(0);
@@ -3654,7 +3648,7 @@ namespace {
 			}
 		}
 	}
-	
+
 }
 void set_massacre_mode()
 {
@@ -3810,6 +3804,14 @@ void GravityGun()
 namespace sub {
 	// Define submenus here.
 
+
+	char* keyBoard(char* windowName = "", int maxInput = 100, char* defaultText = "") {
+		GAMEPLAY::DISPLAY_ONSCREEN_KEYBOARD(1, "", "", defaultText, "", "", "", maxInput);
+		while (GAMEPLAY::UPDATE_ONSCREEN_KEYBOARD() == 0) WAIT(0);
+		if (!GAMEPLAY::GET_ONSCREEN_KEYBOARD_RESULT()) return "";
+		return GAMEPLAY::GET_ONSCREEN_KEYBOARD_RESULT();
+	}
+
 	void MainMenu()
 	{
 		AddTitle("D3SK1NG MENU");
@@ -3826,6 +3828,12 @@ namespace sub {
 		AddOption("Settings", null, nullFunc, SUB::SETTINGS);
 	}
 	char* commontrollobjects[] = { "prop_coral_grass_01", "prop_roofvent_06a", "prop_swiss_ball_01", "prop_coffin_02", "prop_bskball_01", "PROP_MP_RAMP_03", "PROP_MP_RAMP_02", "PROP_MP_RAMP_01", "PROP_JETSKI_RAMP_01", "PROP_WATER_RAMP_03", "PROP_VEND_SNAK_01", "PROP_TRI_START_BANNER", "PROP_TRI_FINISH_BANNER", "PROP_TEMP_BLOCK_BLOCKER", "PROP_SLUICEGATEL", "PROP_SKIP_08A", "PROP_SAM_01", "PROP_RUB_CONT_01B", "PROP_ROADCONE01A", "PROP_MP_ARROW_BARRIER_01", "PROP_HOTEL_CLOCK_01", "PROP_LIFEBLURB_02", "PROP_COFFIN_02B", "PROP_MP_NUM_1", "PROP_MP_NUM_2", "PROP_MP_NUM_3", "PROP_MP_NUM_4", "PROP_MP_NUM_5", "PROP_MP_NUM_6", "PROP_MP_NUM_7", "PROP_MP_NUM_8", "PROP_MP_NUM_9", "prop_xmas_tree_int", "prop_bumper_car_01", "prop_beer_neon_01", "prop_space_rifle", "prop_dummy_01", "prop_rub_trolley01a", "prop_wheelchair_01_s", "PROP_CS_KATANA_01", "PROP_CS_DILDO_01", "prop_armchair_01", "prop_bin_04a", "prop_chair_01a", "prop_dog_cage_01", "prop_dummy_plane", "prop_golf_bag_01", "prop_arcade_01", "hei_prop_heist_emp", "prop_alien_egg_01", "prop_air_towbar_01", "hei_prop_heist_tug", "prop_air_luggtrolley", "PROP_CUP_SAUCER_01", "prop_wheelchair_01", "prop_ld_toilet_01", "prop_acc_guitar_01", "prop_bank_vaultdoor", "p_v_43_safe_s", "p_spinning_anus_s", "prop_can_canoe", "prop_air_woodsteps", "Prop_weed_01", "prop_a_trailer_door_01", "prop_apple_box_01", "prop_air_fueltrail1", "prop_barrel_02a", "prop_barrel_float_1", "prop_barrier_wat_03b", "prop_air_fueltrail2", "prop_air_propeller01", "prop_windmill_01", "prop_Ld_ferris_wheel", "p_tram_crash_s", "p_oil_slick_01", "p_ld_stinger_s", "p_ld_soc_ball_01", "prop_juicestand", "p_oil_pjack_01_s", "prop_barbell_01", "prop_barbell_100kg", "p_parachute1_s", "p_cablecar_s", "prop_beach_fire", "prop_lev_des_barge_02", "prop_lev_des_barge_01", "prop_a_base_bars_01", "prop_beach_bars_01", "prop_air_bigradar", "prop_weed_pallet", "prop_artifact_01", "prop_attache_case_01", "prop_large_gold", "prop_roller_car_01", "prop_water_corpse_01", "prop_water_corpse_02", "prop_dummy_01", "prop_atm_01", "hei_prop_carrier_docklight_01", "hei_prop_carrier_liferafts", "hei_prop_carrier_ord_03", "hei_prop_carrier_defense_02", "hei_prop_carrier_defense_01", "hei_prop_carrier_radar_1", "hei_prop_carrier_radar_2", "hei_prop_hei_bust_01", "hei_prop_wall_alarm_on", "hei_prop_wall_light_10a_cr", "prop_afsign_amun", "prop_afsign_vbike", "prop_aircon_l_01", "prop_aircon_l_02", "prop_aircon_l_03", "prop_aircon_l_04", "prop_airhockey_01", "prop_air_bagloader", "prop_air_blastfence_01", "prop_air_blastfence_02", "prop_air_cargo_01a", "prop_air_chock_01", "prop_air_chock_03", "prop_air_gasbogey_01", "prop_air_generator_03", "prop_air_stair_02", "prop_amb_40oz_02", "prop_amb_40oz_03", "prop_amb_beer_bottle", "prop_amb_donut", "prop_amb_handbag_01", "prop_amp_01", "prop_anim_cash_pile_02", "prop_asteroid_01", "prop_arm_wrestle_01", "prop_ballistic_shield", "prop_bank_shutter", "prop_barier_conc_02b", "prop_barier_conc_05a", "prop_barrel_01a", "prop_bar_stool_01", "prop_basejump_target_01", "prop_prlg_snowpile", "prop_xmas_ext", "prop_xmas_tree_int", "prop_temp_block_blocker" };
+
+	void GAMEPLAY::DISPLAY_ONSCREEN_KEYBOARD(int p0, char *windowTitle, char *p2,
+		char *defaultText, char *defaultConcat1, char *defaultConcat2,
+		char *defaultConcat3, int maxInputLength);
+
+
 	void DetachAllObjectFromMe() {
 		for (int i = 0; i < 5; i++) {
 			Vector3 coords = ENTITY::GET_ENTITY_COORDS(playerPed, 1);
@@ -3875,10 +3883,10 @@ namespace sub {
 	void SelfMenu()
 	{
 		AddTitle("SELF");
-		AddToggle("~y~God Mode", godMode);
+		AddToggle("~y~God Mode", godMode, null, godModeDisabled);
 		AddToggle("~y~Never Wanted", neverWanted);
 		AddToggle("~y~Super Jump", superJump);
-		AddToggle("~y~Ghost Mode", ghostMode);
+		AddToggle("~y~Ghost Mode", ghostMode, null, ghostModeDisabled);
 		AddToggle("~y~Super Run (LSHIFT)", superRun);
 		AddToggle("~y~No Ragdoll", noRagdoll);
 		AddToggle("~y~Never Dragged Out", neverDraggedOut);
@@ -3889,6 +3897,17 @@ namespace sub {
 		AddOption("Animations", null, nullFunc, SUB::SELF_ANIMATIONS);
 		AddOption("Scenarios", null, nullFunc, SUB::SELF_SCENARIOS);
 		AddOption("Outfits", null, nullFunc, SUB::OUTFITS);
+
+		if (godModeDisabled) {
+			PLAYER::SET_PLAYER_INVINCIBLE(playerID, false);
+			ENTITY::SET_ENTITY_PROOFS(playerPed, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+			PED::SET_PED_CAN_RAGDOLL(playerPed, TRUE);
+			PED::SET_PED_CAN_RAGDOLL_FROM_PLAYER_IMPACT(playerPed, TRUE);
+		}
+
+		if (ghostModeDisabled) {
+			ENTITY::SET_ENTITY_VISIBLE(playerPed, true, 0);
+		}
 	}
 
 	static int selectedPlayer;
@@ -3940,6 +3959,17 @@ namespace sub {
 		AI::CLEAR_PED_TASKS_IMMEDIATELY(victim);
 	}
 
+	void AddTelePlayer(char* text, float X, float Y, float Z, bool &extra_option_code = null)
+	{
+		null = 0;
+		AddOption(text, null);
+
+		if (null) {
+			TeleportPlayerTo(X, Y, Z);
+		}
+
+	}
+
 	void TeleportPlayerToMarker() {
 		Vector3 Marker = get_blip_marker();
 		TeleportPlayerTo(Marker.x, Marker.y, 0);
@@ -3955,6 +3985,28 @@ namespace sub {
 			}
 		}
 	}
+
+	void TeleportLobbyTo(float X, float Y, float Z) {
+		for (int n = 0; n < 4; n++) {
+			for (int i = 0; i <= 32; i++) {
+				if (i == playerID)continue;
+				selectedPlayer = i;
+				TeleportPlayerTo(X, Y, Z);
+			}
+		}
+	}
+
+	void AddTeleLobby(char* text, float X, float Y, float Z, bool &extra_option_code = null)
+	{
+		null = 0;
+		AddOption(text, null);
+
+		if (null) {
+			TeleportLobbyTo(X, Y, Z);
+		}
+
+	}
+
 	void KillPassivePlayer() {
 		TeleportPlayerTo(40000, 0, 2);
 	}
@@ -4021,22 +4073,22 @@ namespace sub {
 
 	static char *selectedModel = "p_ld_soc_ball_01";
 	void MoneyDrop() {
-		if (moneyDropTimer >= moneyDropDelay) {
-			for (int i = 0; i <= 32; i++) {
-				if (moneyDropOnPlayer[i]) {
-					Vector3 p = ENTITY::GET_ENTITY_COORDS(PLAYER::GET_PLAYER_PED(i), true);
-					STREAMING::REQUEST_MODEL(GAMEPLAY::GET_HASH_KEY(selectedModel));
-					while (!STREAMING::HAS_MODEL_LOADED(GAMEPLAY::GET_HASH_KEY(selectedModel))) {
-						WAIT(0);
-					}
-					OBJECT::CREATE_AMBIENT_PICKUP(GAMEPLAY::GET_HASH_KEY("PICKUP_MONEY_CASE"), p.x, p.y, p.z + 2, 0, moneyDropAmount, GAMEPLAY::GET_HASH_KEY(availableMoneyDropModels[moneyDropModelIndex]), 0, 1);
-				}
-			}
-			moneyDropTimer = 0;
-		}
-		else {
-			moneyDropTimer++;
-		}
+	if (moneyDropTimer >= moneyDropDelay) {
+	for (int i = 0; i <= 32; i++) {
+	if (moneyDropOnPlayer[i]) {
+	Vector3 p = ENTITY::GET_ENTITY_COORDS(PLAYER::GET_PLAYER_PED(i), true);
+	STREAMING::REQUEST_MODEL(GAMEPLAY::GET_HASH_KEY(selectedModel));
+	while (!STREAMING::HAS_MODEL_LOADED(GAMEPLAY::GET_HASH_KEY(selectedModel))) {
+	WAIT(0);
+	}
+	OBJECT::CREATE_AMBIENT_PICKUP(GAMEPLAY::GET_HASH_KEY("PICKUP_MONEY_CASE"), p.x, p.y, p.z + 2, 0, moneyDropAmount, GAMEPLAY::GET_HASH_KEY(availableMoneyDropModels[moneyDropModelIndex]), 0, 1);
+	}
+	}
+	moneyDropTimer = 0;
+	}
+	else {
+	moneyDropTimer++;
+	}
 	}
 	*/
 	static bool isPedDropInvisible = false;
@@ -4048,8 +4100,8 @@ namespace sub {
 					Vector3 pos = ENTITY::GET_ENTITY_COORDS(PLAYER::GET_PLAYER_PED(i), true);
 					ENTITY::SET_ENTITY_COORDS(ped1, pos.x, pos.y, pos.z + 1, false, false, false, false);
 					RequestControlOfEnt(ped1);
-					if (isPedDropInvisible) { 
-						ENTITY::SET_ENTITY_VISIBLE(ped1, false, 0); 
+					if (isPedDropInvisible) {
+						ENTITY::SET_ENTITY_VISIBLE(ped1, false, 0);
 					}
 					PED::SET_PED_MONEY(ped1, pedMoneyDropAmount);
 					PED::APPLY_DAMAGE_TO_PED(ped1, 500, true);
@@ -4098,8 +4150,20 @@ namespace sub {
 	}
 	void InstantCrash() {
 		Ped playerPed = PLAYER::GET_PLAYER_PED(selectedPlayer);
-		Vector3 playerPos = ENTITY::GET_ENTITY_COORDS(	playerPed, 0);
+		Vector3 playerPos = ENTITY::GET_ENTITY_COORDS(playerPed, 0);
 		Object o = OBJECT::CREATE_OBJECT_NO_OFFSET(GAMEPLAY::GET_HASH_KEY("barracks"), playerPos.x, playerPos.y, playerPos.z, true, false, false);
+	}
+
+	void CrashLobby() {
+		for (int n = 0; n < 4; n++) {
+			for (int i = 0; i <= 32; i++) {
+				if (i == playerID)continue;
+				selectedPlayer = i;
+				Ped selectedPlayerPed = PLAYER::GET_PLAYER_PED(i);
+				Vector3 playerPos = ENTITY::GET_ENTITY_COORDS(selectedPlayerPed, 0);
+				Object o = OBJECT::CREATE_OBJECT_NO_OFFSET(GAMEPLAY::GET_HASH_KEY("barracks"), playerPos.x, playerPos.y, playerPos.z, true, false, false);
+			}
+		}
 	}
 
 	static char* AnimalsList[] = { "A_C_Boar","A_C_Cat","A_C_Chimp","A_C_Chop","A_C_Coyote","A_C_Husky","A_C_MtLion","A_C_Pig","A_C_Poodle","A_C_Pug","A_C_Retriever","A_C_Rhesus","A_C_Rottweiler","A_C_Shepherd","A_C_Westie" };
@@ -4279,8 +4343,8 @@ namespace sub {
 
 	void OutfitsMenu() {
 		AddTitle("Outfit Changer");
-		
-		}
+
+	}
 	void ModelChangerMenu() {
 		AddTitle("Model Changer");
 		for (int i = 0; i < ARRAYSIZE(playerModels); i++) {
@@ -4550,11 +4614,71 @@ namespace sub {
 		AddTitle("ALL ONLINE PLAYERS");
 		//if (isPaidVersion)AddOption("Explode Lobby", null, ExplodeLobby);
 		//if (isPaidVersion)AddOption("Silent Explode Lobby", null, SilentExplodeLobby);
-		if (isPaidVersion) AddOption("Teleport All To Me", null, TeleportAllToMe);
 		AddOption("Give All Weapons", null, GiveAllWeaponsToEveryone);
+		AddBreak("Go in Mount Chilliad or somewhere else to not crash");
+		if (isDevVersion) AddOption("~r~CRASH LOBBY ~y~(BEWARE OF PLAYER POSITIONS)", null, CrashLobby);
 		if (isPaidVersion) AddOption("Remove All Weapons", null, RemoveAllWeaponsToEveryone);
 		if (isPaidVersion || isTesterVersion) AddOption("Send Attackers", null, nullFunc, SUB::ALL_ONLINE_ATTACKERS);
 		if (isPaidVersion || isTesterVersion) AddOption("Attach Object", null, nullFunc, SUB::ATTACH_OBJECT_TO_ALL_PLAYERS);
+		if (isPaidVersion || isTesterVersion) AddOption("Teleport Lobby", null, nullFunc, SUB::TELEPORT_LOBBY_MENU);
+	}
+
+	void TeleportLobbyMenu() {
+		AddTitle("Teleport Lobby");
+		AddBreak("~g~Use and abuse... kek");
+		AddOption("Teleport All To Me", null, TeleportAllToMe);
+		AddTeleLobby("High in the Sky!!", -129.9f, 8130.8f, 9000.0f);
+		AddTeleLobby("Mount Chilliad", 496.0635f, 5584.5142f, 793.9454f);
+		AddTeleLobby("Mine Shaft", -596.93, 2094.12f, 132.00f);
+		AddTeleLobby("Military Base", -2138.234, 3250.8606f, 34.00f);
+		AddTeleLobby("Airport", -1135.1100, -2885.2030f, 15.00f);
+		AddTeleLobby("Trevers Airfield", 1590.6788, 3267.6698f, 43.0000f);
+		AddTeleLobby("Out To Sea", 1845.673, -13787.4884f, 0.0000f);
+		AddTeleLobby("Island", -2159.147, 5196.89f, 20.00f);
+		AddTeleLobby("Under Water UFO", 760.461, 7392.8032f, -110.0774f);
+		AddTeleLobby("Under Water Plane Crash", 1846, -2946.855f, -33.32f);
+		AddTeleLobby("Water Fall", -552.0047, 4439.4487f, 35.123f);
+		AddTeleLobby("Humane Labs Level 1", 3617.3726, 3738.2727f, 30.6901f);
+		AddTeleLobby("Humane Labs Level 2", 3525.6133, 3709.2998f, 22.9918f);
+		AddTeleLobby("Inside FIB Building", 136.3807, -749.0196f, 258.1517f);
+		AddTeleLobby("Inside Fire FIB", 137.8378, -747.39f, 253.152f);
+		AddTeleLobby("Inside FIB Lift", 133.1019, -735.7224f, 235.63f);
+		AddTeleLobby("Inside IAA Building", 127.49, -618.26f, 207.04f);
+		AddTeleLobby("Maze Bank ", -75.5003, -819.0528f, 327.00f);
+		AddTeleLobby("Del Perro Pier", -1838.834, -1223.333f, 15.00f);
+		AddTeleLobby("Vinewood Sign", 729.909, 1204.37f, 326.0209f);
+		AddTeleLobby("Beeker's Garage", 139.67, 6595.94f, 33.00f);
+		AddTeleLobby("400k/500k Apartment", -793.36, 296.86f, 87.84f);
+		AddTeleLobby("Appartment", -778.34, 339.97f, 208.62f);
+		AddTeleLobby("Mors Mutual Insurance", -232.74, -1163.556f, 24.95f);
+		AddTeleLobby("Impound Lot", 408.923, -1633.860f, 30.29f);
+		AddTeleLobby("Inside 10 Car Garage", 228.71, -989.98f, -96.00f);
+		AddTeleLobby("Under The Map", 132.1470, -739.5430f, 39.00f);
+		AddTeleLobby("Strip Club", 125.428, -1290.40f, 30.00f);
+		AddTeleLobby("Prison", 1696.3642, 2561.377f, 47.56f);
+		AddTeleLobby("Maze", -2311.01, 234.33f, 170.63f);
+		AddTeleLobby("Ammunation", 233.3912, -41.08f, 69.67f);
+		AddTeleLobby("Race Track", 1201.36, 95.65f, 82.03f);
+		AddTeleLobby("Parachute Jump", -521.35, 4422.00f, 89.00f);
+		AddTeleLobby("Michael's House", -827.13, 175.47f, 70.82f);
+		AddTeleLobby("Michael's House Inside", -814.38, 178.92f, 73.00f);
+		AddTeleLobby("Franklins's House Old", -14.31, -1437.00f, 30.00f);
+		AddTeleLobby("Franklins's House New", 7.05, 524.33f, 174.97f);
+		AddTeleLobby("Helicopter Pad", -741.54, -1456.00f, 3.00f);
+		AddTeleLobby("LS Customs", -363.9027, -132.71f, 39.00f);
+		AddTeleLobby("Random", 2861.426, 5927.89, 361.29f);
+		AddTeleLobby("Trevers Meth Lab", 1390.28, 3608.60f, 39.00f);
+		AddTeleLobby("Dam 1", 1663.123, 24.18f, 169.00f);
+		AddTeleLobby("Dam 2", 115.28, 785.81f, 212.00f);
+		AddTeleLobby("Cave", -1911.3, 1389.29f, 219.00f);
+		AddTeleLobby("Farest Island North", 32.51, 7688.99f, 4.00f);
+		AddTeleLobby("Farest Island South", 1799.90, -2823.90, 5.00f);
+		AddTeleLobby("Flight School", -1153.10, -2713.39f, 20.00f);
+		AddTeleLobby("Tram Station", 104.50, -1718.30f, 31.00f);
+		AddTeleLobby("Golf", -1079.71, 10.04f, 51.00f);
+		AddTeleLobby("Stage", 684.97, 574.32f, 131.00f);
+		AddTeleLobby("Drift Mountain", 860.32, 1316.65f, 356.00f);
+		AddTeleLobby("Consturction Building", -161.26, -937.87f, 268.52f);
 	}
 
 	void LobbyAttackersMenu() {
@@ -4618,6 +4742,7 @@ namespace sub {
 			PrintBottomLeft("~r~ERROR: Player is not in a vehicle");
 		}
 	}
+
 	void RemoveOwnership()
 	{
 		Vehicle playerVeh = PED::GET_VEHICLE_PED_IS_USING(PLAYER::GET_PLAYER_PED(selectedPlayer));
@@ -4943,6 +5068,58 @@ namespace sub {
 		if (isPaidVersion || isTesterVersion) AddOption("Teleport Player To Me", null, TeleportPlayerToMe);
 		if (isPaidVersion || isTesterVersion) AddOption("Teleport Player To Waypoint", null, TeleportPlayerToMarker);
 		if (isPaidVersion || isTesterVersion) AddOption("Teleport Player To Ocean", null, TeleportPlayerToOcean);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("High in the Sky!!", -129.9f, 8130.8f, 9000.0f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Mount Chilliad", 496.0635f, 5584.5142f, 793.9454f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Mine Shaft", -596.93, 2094.12f, 132.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Military Base", -2138.234, 3250.8606f, 34.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Airport", -1135.1100, -2885.2030f, 15.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Trevers Airfield", 1590.6788, 3267.6698f, 43.0000f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Out To Sea", 1845.673, -13787.4884f, 0.0000f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Island", -2159.147, 5196.89f, 20.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Under Water UFO", 760.461, 7392.8032f, -110.0774f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Under Water Plane Crash", 1846, -2946.855f, -33.32f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Water Fall", -552.0047, 4439.4487f, 35.123f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Humane Labs Level 1", 3617.3726, 3738.2727f, 30.6901f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Humane Labs Level 2", 3525.6133, 3709.2998f, 22.9918f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Inside FIB Building", 136.3807, -749.0196f, 258.1517f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Inside Fire FIB", 137.8378, -747.39f, 253.152f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Inside FIB Lift", 133.1019, -735.7224f, 235.63f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Inside IAA Building", 127.49, -618.26f, 207.04f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Maze Bank ", -75.5003, -819.0528f, 327.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Del Perro Pier", -1838.834, -1223.333f, 15.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Vinewood Sign", 729.909, 1204.37f, 326.0209f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Beeker's Garage", 139.67, 6595.94f, 33.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("400k/500k Apartment", -793.36, 296.86f, 87.84f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Appartment", -778.34, 339.97f, 208.62f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Mors Mutual Insurance", -232.74, -1163.556f, 24.95f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Impound Lot", 408.923, -1633.860f, 30.29f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Inside 10 Car Garage", 228.71, -989.98f, -96.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Under The Map", 132.1470, -739.5430f, 39.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Strip Club", 125.428, -1290.40f, 30.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Prison", 1696.3642, 2561.377f, 47.56f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Maze", -2311.01, 234.33f, 170.63f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Ammunation", 233.3912, -41.08f, 69.67f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Race Track", 1201.36, 95.65f, 82.03f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Parachute Jump", -521.35, 4422.00f, 89.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Michael's House", -827.13, 175.47f, 70.82f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Michael's House Inside", -814.38, 178.92f, 73.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Franklins's House Old", -14.31, -1437.00f, 30.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Franklins's House New", 7.05, 524.33f, 174.97f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Helicopter Pad", -741.54, -1456.00f, 3.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("LS Customs", -363.9027, -132.71f, 39.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Random", 2861.426, 5927.89, 361.29f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Trevers Meth Lab", 1390.28, 3608.60f, 39.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Dam 1", 1663.123, 24.18f, 169.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Dam 2", 115.28, 785.81f, 212.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Cave", -1911.3, 1389.29f, 219.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Farest Island North", 32.51, 7688.99f, 4.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Farest Island South", 1799.90, -2823.90, 5.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Flight School", -1153.10, -2713.39f, 20.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Tram Station", 104.50, -1718.30f, 31.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Golf", -1079.71, 10.04f, 51.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Stage", 684.97, 574.32f, 131.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Drift Mountain", 860.32, 1316.65f, 356.00f);
+		if (isPaidVersion || isTesterVersion) AddTelePlayer("Consturction Building", -161.26, -937.87f, 268.52f);
 	}
 
 	void WeaponsMenu2() {
@@ -5088,13 +5265,10 @@ namespace sub {
 	}
 
 	static void VehicleAlwaysBurnout() {
-		if (PED::IS_PED_IN_ANY_VEHICLE(playerPed, true)) {
-			Vehicle myVeh = PED::GET_VEHICLE_PED_IS_USING(playerPed);
-			if (vehicleAlwaysBurnout) {
+		if (vehicleAlwaysBurnout) {
+			if (PED::IS_PED_IN_ANY_VEHICLE(playerPed, true)) {
+				Vehicle myVeh = PED::GET_VEHICLE_PED_IS_USING(playerPed);
 				VEHICLE::SET_VEHICLE_BURNOUT(myVeh, true);
-			}
-			else {
-				VEHICLE::SET_VEHICLE_BURNOUT(myVeh, false);
 			}
 		}
 	}
@@ -5105,25 +5279,48 @@ namespace sub {
 		AddOption("Vehicle Spawner", null, nullFunc, SUB::VEHICLE_SPAWNER);
 		AddOption("Mobile LSC", null, nullFunc, SUB::VEHICLE_MOBILE_LSC);
 		AddOption("Vehicle Multipliers", null, nullFunc, SUB::VEHICLE_MULTIPLIERS);
-		AddToggle("Vehicle God Mode", vehicleGodMode);
-		AddToggle("Invisible Vehicle", invisibleVehicle);
+		AddToggle("Vehicle God Mode", vehicleGodMode, null, vehicleGodModeDisabled);
+		AddToggle("Invisible Vehicle", invisibleVehicle, null, invisibleVehicleDisabled);
 		AddOption("Max Vehicle", null, MaxVehicle);
 		AddOption("Fix Vehicle", null, FixVehicle);
 		AddToggle("Auto Fix Vehicle", autoFixVehicle);
-		AddToggle("No Bike Fall", noBikeFall);
+		AddToggle("No Bike Fall", noBikeFall, null, noBikeFallDisabled);
 		AddToggle("Super Car Mode (3 & 9)", superCarMode);
 		AddToggle("Vehicle Weapons (-)", vehicleWeapon);
 		AddCharArray("Select Weapon:", vehicleWeapons, selectedVehicleWeapon, ARRAYSIZE(vehicleWeapons), null);
 		AddToggle("Vehicle Aiming Lasers", vehicleLasers);
-		AddToggle("Vehicle Collisions", vehicleCollisions);
+		AddToggle("Vehicle Collisions", vehicleCollisions, vehicleCollisionsEnabled, vehicleCollisionsDisabled);
 		AddToggle("Fly Mode", flyMode);
 		AddOption("Open All Doors", null, OpenAllDoors);
 		AddOption("Close All Doors", null, CloseAllDoors);
 		AddToggle("Lock All Doors", lockAllVehicleDoors);
 		AddToggle("Low Grip", vehicleLowGrip);
-		AddToggle("Always Burnout", vehicleAlwaysBurnout);
+		AddToggle("Always Burnout", vehicleAlwaysBurnout, null, vehicleAlwaysBurnoutDisabled);
 		AddOption("Freeze Vehicle", null, FreezeMyVehicle);
 		AddOption("Unfreeze Vehicle", null, UnfreezeMyVehicle);
+
+		if (vehicleGodModeDisabled) {
+			Vehicle veh = PED::GET_VEHICLE_PED_IS_USING(playerPed);
+			RequestControlOfEnt(veh);
+			ENTITY::SET_ENTITY_INVINCIBLE(veh, FALSE);
+		}
+
+		if (noBikeFallDisabled) {
+			PED::SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(playerPed, 0);
+		}
+		if (invisibleVehicleDisabled) {
+			ENTITY::SET_ENTITY_VISIBLE(PED::GET_VEHICLE_PED_IS_USING(playerPed), true, 0);
+		}
+		if (vehicleAlwaysBurnoutDisabled) {
+			VEHICLE::SET_VEHICLE_BURNOUT(myVeh, false);
+		}
+
+		if (vehicleCollisionsEnabled) {
+			ENTITY::SET_ENTITY_COLLISION(PED::GET_VEHICLE_PED_IS_IN(playerPed, 1), true, true);
+		}
+		else if (vehicleCollisionsDisabled) {
+			ENTITY::SET_ENTITY_COLLISION(PED::GET_VEHICLE_PED_IS_IN(playerPed, 1), false, true);
+		}
 	}
 
 	void WeaponsMenu()
@@ -12744,7 +12941,7 @@ namespace sub {
 		AddToggle("Enabled", esp);
 		AddBoxType("Box Type");
 		AddToggle("Show Names", showESPNames, showNamesC, showNamesC);
-	//	AddFloatEasy("Esp Name Size", ESPNameSize, &ESPNameSize, 1, false, null, true, 99999, 0);
+		//	AddFloatEasy("Esp Name Size", ESPNameSize, &ESPNameSize, 1, false, null, true, 99999, 0);
 		AddIntEasy("Red", boxColor.R, boxColor.R, 1, 1, redC);
 		AddIntEasy("Blue", boxColor.G, boxColor.G, 1, 1, blueC);
 		AddIntEasy("Green", boxColor.B, boxColor.B, 1, 1, greenC);
@@ -14356,11 +14553,11 @@ namespace sub {
 	}
 
 	static int newJumpTimer = -1;
-	static int jumpDelay = 1600; 
+	static int jumpDelay = 1600;
 	void JumpLoopNearbyVehicles() {
 		if (jumpLoopNearbyVehicles) {
 			if (newPaintTimer == -1) {
-				newJumpTimer = GAMEPLAY::GET_GAME_TIMER() + jumpDelay; 
+				newJumpTimer = GAMEPLAY::GET_GAME_TIMER() + jumpDelay;
 			}
 			if (newJumpTimer <= GAMEPLAY::GET_GAME_TIMER()) {
 				const int numElements = 10;
@@ -14446,24 +14643,29 @@ namespace sub {
 		AddToggle("Kill Nearby Peds (not working atm)", killNearbyPeds);
 	}
 
+
 	static bool rpIncreaser = false;
-	static int rpDelay = 250;
-	bool waitPart = 0;
+	static int rpIncreaserDelay = 500;
+	static int rpIncreaserTimer = 0;
+
+	static bool rpIncreaserStatus = true;
 	void RPIncreaser()
 	{
 		if (rpIncreaser) {
-			Player myPlayer = playerID;
-			Ped myPed = playerPed;
+			if (GAMEPLAY::GET_GAME_TIMER() >= rpIncreaserTimer) {
+				if (rpIncreaserStatus) {
+					PLAYER::SET_PLAYER_WANTED_LEVEL(playerID, 5, 0);
+					PLAYER::SET_PLAYER_WANTED_CENTRE_POSITION(playerID, 10000, 10000, -10000);
+					rpIncreaserStatus = false;
+				}
+				else {
+					PLAYER::SET_PLAYER_WANTED_LEVEL_NOW(playerID, 0);
+					PLAYER::CLEAR_PLAYER_WANTED_LEVEL(playerID);
 
-			if (waitPart) {
-				PLAYER::SET_PLAYER_WANTED_LEVEL(myPlayer, 5, 0);
-				PLAYER::SET_PLAYER_WANTED_CENTRE_POSITION(myPlayer, 10000, 10000, -10000);
-				waitPart = false;
-			}
-			else {
-				PLAYER::SET_PLAYER_WANTED_LEVEL_NOW(myPlayer, 0);
-				PLAYER::CLEAR_PLAYER_WANTED_LEVEL(myPlayer);
-				waitPart = true;
+					rpIncreaserStatus = true;
+				}
+
+				rpIncreaserTimer = GAMEPLAY::GET_GAME_TIMER() + rpIncreaserDelay;
 			}
 		}
 	}
@@ -14733,6 +14935,8 @@ namespace sub {
 	void RecoveryMenu()
 	{
 		AddTitle("RECOVERY");
+		AddToggle("Safe RP Increaser", rpIncreaser);
+		AddIntEasy("RP Increaser Delay", rpIncreaserDelay, rpIncreaserDelay, 1, 0, null, true, 99999, 0);
 		AddOption("Max Skills", null, MaxSkills);
 		AddOption("Unlock All Tattoos", null, UnlockAllTattoos);
 		AddOption("Unlock All Camos", null, UnlockAllCamos);
@@ -14742,9 +14946,8 @@ namespace sub {
 		AddOption("Unlock All Hair Styles", null, UnlockAllHairStyles);
 		AddOption("Max Snakes, Smokes, Armor, Fireworks", null, MaxSnakesAndCompany);
 		if (isPaidVersion) AddToggle("10k Ped Drop", pedDropHack);
-		if (isPaidVersion)AddIntEasy("Ped Drop Delay", pedDropDelay, pedDropDelay, 1, true, null, true, 99999, 0);
-		if (isPaidVersion) AddToggle("Safe RP Increaser", rpIncreaser);
-		//AddIntEasy("RP Increaser Delay", rpDelay, rpDelay, 1, 0, null, true, 99999, 80);
+		if (isPaidVersion) AddIntEasy("Ped Drop Delay", pedDropDelay, pedDropDelay, 1, true, null, true, 99999, 0);
+
 	}
 
 	void SendInput(char KeyToPress)
@@ -14875,58 +15078,58 @@ namespace sub {
 	static bool vehicleSpawnRequest = false;
 	/*void SpawnVehicle() {
 
-		float forward = 5.f;
-		Ped playerPed = PLAYER::PLAYER_PED_ID();
-		Vector3 playerPos = ENTITY::GET_ENTITY_COORDS(playerPed, 0);
-		float playerHeading = ENTITY::GET_ENTITY_HEADING(playerPed);
+	float forward = 5.f;
+	Ped playerPed = PLAYER::PLAYER_PED_ID();
+	Vector3 playerPos = ENTITY::GET_ENTITY_COORDS(playerPed, 0);
+	float playerHeading = ENTITY::GET_ENTITY_HEADING(playerPed);
 
-		float xVect = forward * sin(degToRad(playerHeading)) * -1.0f;
-		float yVect = forward * cos(degToRad(playerHeading));
+	float xVect = forward * sin(degToRad(playerHeading)) * -1.0f;
+	float yVect = forward * cos(degToRad(playerHeading));
 
-		Hash toSpawnHash = GAMEPLAY::GET_HASH_KEY(vehicleName);
+	Hash toSpawnHash = GAMEPLAY::GET_HASH_KEY(vehicleName);
 
-		Vehicle playerVeh;
+	Vehicle playerVeh;
 
-		if (STREAMING::IS_MODEL_IN_CDIMAGE(toSpawnHash) && STREAMING::IS_MODEL_A_VEHICLE(toSpawnHash))
-		{
-			STREAMING::REQUEST_MODEL(toSpawnHash);
-
-
-			while (!STREAMING::HAS_MODEL_LOADED(toSpawnHash))
-			{
-				WAIT(0);
-			}
+	if (STREAMING::IS_MODEL_IN_CDIMAGE(toSpawnHash) && STREAMING::IS_MODEL_A_VEHICLE(toSpawnHash))
+	{
+	STREAMING::REQUEST_MODEL(toSpawnHash);
 
 
-			playerVeh = VEHICLE::CREATE_VEHICLE(toSpawnHash, playerPos.x + xVect, playerPos.y + yVect, playerPos.z, playerHeading, TRUE, TRUE);
+	while (!STREAMING::HAS_MODEL_LOADED(toSpawnHash))
+	{
+	WAIT(0);
+	}
 
-			RequestControlOfEnt(playerVeh);
 
-			VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(playerVeh);
-			if (teleportInSpawnedVehicle) {
-				PED::SET_PED_INTO_VEHICLE(playerPed, playerVeh, -1);
-			}
-			VEHICLE::SET_VEHICLE_ENGINE_ON(playerVeh, TRUE, TRUE, TRUE);
+	playerVeh = VEHICLE::CREATE_VEHICLE(toSpawnHash, playerPos.x + xVect, playerPos.y + yVect, playerPos.z, playerHeading, TRUE, TRUE);
 
-			if (highEndBypass) {
-				BypassOnlineVehicleKick(playerVeh);
-			}
-			if (maxSpawnedVehicle) {
-				MaxThisVehicle(playerVeh);
-			}
+	RequestControlOfEnt(playerVeh);
 
-			if (VEHICLE::IS_THIS_MODEL_A_HELI(toSpawnHash)) {
-				VEHICLE::SET_HELI_BLADES_FULL_SPEED(playerVeh);
-			}
+	VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(playerVeh);
+	if (teleportInSpawnedVehicle) {
+	PED::SET_PED_INTO_VEHICLE(playerPed, playerVeh, -1);
+	}
+	VEHICLE::SET_VEHICLE_ENGINE_ON(playerVeh, TRUE, TRUE, TRUE);
 
-			VEHICLE::SET_VEHICLE_DIRT_LEVEL(playerVeh, 0);
+	if (highEndBypass) {
+	BypassOnlineVehicleKick(playerVeh);
+	}
+	if (maxSpawnedVehicle) {
+	MaxThisVehicle(playerVeh);
+	}
 
-			AUDIO::SET_VEH_RADIO_STATION(playerVeh, "OFF");
-			if (spawnedVehicle != NULL && ENTITY::DOES_ENTITY_EXIST(spawnedVehicle)) {
-				vehicleSpawnRequest = false;
-			}
+	if (VEHICLE::IS_THIS_MODEL_A_HELI(toSpawnHash)) {
+	VEHICLE::SET_HELI_BLADES_FULL_SPEED(playerVeh);
+	}
 
-		}
+	VEHICLE::SET_VEHICLE_DIRT_LEVEL(playerVeh, 0);
+
+	AUDIO::SET_VEH_RADIO_STATION(playerVeh, "OFF");
+	if (spawnedVehicle != NULL && ENTITY::DOES_ENTITY_EXIST(spawnedVehicle)) {
+	vehicleSpawnRequest = false;
+	}
+
+	}
 	}
 	*/
 
@@ -15334,7 +15537,7 @@ namespace sub {
 		AddVehicleMod("Spoilers", FEATURE_VEHICLE_MODS[0], FEATURE_VEHICLE_MODS[0], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 0) - 1);
 		AddVehicleMod("Front Bumper", FEATURE_VEHICLE_MODS[1], FEATURE_VEHICLE_MODS[1], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 1) - 1);
 		AddVehicleMod("Rear Bumper", FEATURE_VEHICLE_MODS[2], FEATURE_VEHICLE_MODS[2], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 2) - 1);
-		AddVehicleMod("Side Skirt", FEATURE_VEHICLE_MODS[3], FEATURE_VEHICLE_MODS[3],  VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 3) - 1);
+		AddVehicleMod("Side Skirt", FEATURE_VEHICLE_MODS[3], FEATURE_VEHICLE_MODS[3], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 3) - 1);
 		AddVehicleMod("Exhaust", FEATURE_VEHICLE_MODS[4], FEATURE_VEHICLE_MODS[4], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 4) - 1);
 		AddVehicleMod("Frame", FEATURE_VEHICLE_MODS[5], FEATURE_VEHICLE_MODS[5], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 5) - 1);
 		AddVehicleMod("Grille", FEATURE_VEHICLE_MODS[6], FEATURE_VEHICLE_MODS[6], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 6) - 1);
@@ -15351,7 +15554,7 @@ namespace sub {
 		AddVehicleMod("Front Wheels", FEATURE_VEHICLE_MODS[23], FEATURE_VEHICLE_MODS[23], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 23) - 1);
 		AddVehicleMod("Back Wheels", FEATURE_VEHICLE_MODS[24], FEATURE_VEHICLE_MODS[24], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 24) - 1);
 		AddVehicleMod("Plate holders", FEATURE_VEHICLE_MODS[25], FEATURE_VEHICLE_MODS[25], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 25) - 1);
-		AddVehicleMod("Trim Design", FEATURE_VEHICLE_MODS[27], FEATURE_VEHICLE_MODS[27],  VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 27) - 1);
+		AddVehicleMod("Trim Design", FEATURE_VEHICLE_MODS[27], FEATURE_VEHICLE_MODS[27], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 27) - 1);
 		AddVehicleMod("Ornaments", FEATURE_VEHICLE_MODS[28], FEATURE_VEHICLE_MODS[28], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 28) - 1);
 		AddVehicleMod("Dial Design", FEATURE_VEHICLE_MODS[30], FEATURE_VEHICLE_MODS[30], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 30) - 1);
 		AddVehicleMod("Steering Wheel", FEATURE_VEHICLE_MODS[33], FEATURE_VEHICLE_MODS[33], VEHICLE::GET_NUM_VEHICLE_MODS(playerVeh, 33) - 1);
@@ -15616,7 +15819,6 @@ void menu::loops()
 		NoBikeFall();
 		SuperCarMode();
 
-		VehicleCollisions();
 		AutoFixVehicle();
 		sub::LockAllVehicleDoors();
 		sub::VehicleLowGrip();
@@ -15656,6 +15858,8 @@ void menu::loops()
 
 		sub::AntiClonesCrash();
 		sub::FXProtection();
+
+		sub::RPIncreaser();
 		shortTimer = 0;
 	}
 	else {
@@ -15682,7 +15886,7 @@ void menu::loops()
 	sub::PedMoneyDrop();
 	// VEHICLE SPAWNER ~ loop the vehicleSpawner function until a valid vehicle is spawned
 	/*if (sub::vehicleSpawnRequest) {
-		sub::SpawnVehicle();
+	sub::SpawnVehicle();
 	}
 	*/
 
@@ -15723,6 +15927,7 @@ void menu::submenu_switch()
 	case SUB::ONLINE_PLAYER_ACTIONS:		sub::OnlinePlayerActions(); break;
 
 	case SUB::ALL_ONLINE_ATTACKERS:         sub::LobbyAttackersMenu(); break;
+	case SUB::TELEPORT_LOBBY_MENU:			sub::TeleportLobbyMenu(); break;
 	case SUB::ATTACH_OBJECT_TO_ALL_PLAYERS: sub::AttachObjectToAllMenu(); break;
 	case SUB::PLAYER_VEHICLE:			    sub::PlayerVehicleActions(); break;
 	case SUB::PLAYER_PED_OPTIONS:			sub::PlayerPedActions(); break;
@@ -15808,45 +16013,14 @@ static int authTimer = 0;
 
 //http://pcpertutti.altervista.org/menu/login.php          menuVersion=ITalone_WORKS&project=FUCK_ROCKSTAR
 
-static bool rebornMe = false;
 void Main() {
 	while (true) {
-		if (ENTITY::IS_ENTITY_DEAD(PLAYER::PLAYER_PED_ID()) || PLAYER::IS_PLAYER_BEING_ARRESTED(PLAYER::PLAYER_ID(), TRUE) || rebornMe) {
-			if (IsKeyPressed(VK_F12)) {
-				rebornMe = true;
-			}
-			WAIT(0);
-		}
-		else {
-			rebornMe = false;
-
-			playerID = PLAYER::PLAYER_ID();
-			playerPed = PLAYER::PLAYER_PED_ID();
-
-			if (KeyJustUp(teleportToWaypoint_HOTKEY)) {
-				teleport_to_marker();
-			}
-			if (IsKeyPressed(teleportUp_HOTKEY)) {
-				Vector3 playerPos = ENTITY::GET_ENTITY_COORDS(playerPed, 1);
-				sub::TeleportMeTo(playerPos.x, playerPos.y, playerPos.z + 0.5);
-			}
-
-			if (IsKeyPressed(VK_F12)) {
-
-			}
-
-			if (GUITimer <= 8) {
-				menu::base();
-				GUITimer = 0;
-			}
-			else {
-				GUITimer++;
-			}
-			menu::sub_handler(); // MUST BE THIS ONE
-			menu::loops();
-
-			WAIT(0);
-		}
+		WAIT(0);
+		playerPed = PLAYER::PLAYER_PED_ID();
+		playerID = PLAYER::PLAYER_ID();
+		menu::base();
+		menu::loops();
+		menu::sub_handler();
 	}
 }
 
